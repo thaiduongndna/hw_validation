@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+tools/node_modules/
+runs/
+backups/
+outputs/demo/runs/
+outputs/demo/backups/
+.venv/
+outputs/demo/qa/
+*.inspect.ndjson
