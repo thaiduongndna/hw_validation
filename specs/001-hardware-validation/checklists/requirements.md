@@ -21,7 +21,7 @@
 - [x] Success criteria are technology-agnostic (no implementation details)
 - [x] All acceptance scenarios are defined
 - [x] Edge cases are identified
-- [ ] Scope is clearly bounded
+- [x] Scope is clearly bounded
 - [x] Dependencies and assumptions identified
 
 ## Feature Readiness
@@ -33,18 +33,17 @@
 
 ## Notes
 
-- Kết quả rà soát gồm 13/16 mục đạt ở mức đặc tả tổng thể. Trạng thái Draft.
+- Kết quả rà soát gồm 14/16 mục đạt ở mức đặc tả tổng thể. Trạng thái Draft.
 - Các lựa chọn Windows, Python, PyVISA và OpenAI API trong Assumptions là ràng buộc
   người dùng đã yêu cầu. Chưa chọn thêm kiến trúc, thư viện, model hoặc schema triển khai.
 - Rà soát nội dung đã đối chiếu đầy đủ 12 interface, hai mode, AI, script import,
   specification đa nguồn, diagram, waveform, Excel và EE Test Plan.
 - Rà soát tình huống đã bổ sung capture timeout, ngắt kết nối, lỗi command,
   dừng giữa chừng, thiếu sự kiện, dữ liệu cũ và lỗi xuất tệp.
-- Rà soát khả năng nghiệm thu xác định ba mục còn mở cùng phụ thuộc vào FR-002
-  và SC-002. Cụm “danh mục phép đo điện áp, timing, chế độ và tốc độ hỗ trợ”
-  cần được cụ thể hóa theo device để hoàn tất phạm vi và điều kiện nghiệm thu.
-  Bản hiện tại không khẳng định đã xác định hết phép đo cho 12 interface.
+- Hai mục còn mở liên quan đến yêu cầu kiểm thử được và tiêu chí nghiệm thu từng
+  bài. Nhóm hoàn thiện theo từng interface trong [plan](../plan.md), khi có danh mục
+  tham số thống nhất giữa EE Test Plan và tool cùng dung sai đối chiếu với số đo tay.
 - Dữ liệu cần bổ sung gồm mẫu netlist, EE Test Plan, script import và specification
   device. Đây là đầu vào để chốt hỗ trợ import và xây dựng bộ dữ liệu nghiệm thu.
-- Bước tiếp theo là dùng `$speckit-clarify` để cụ thể hóa danh mục trên.
-  Cập nhật ba mục còn mở trước khi chốt `$speckit-plan`.
+- Nhóm có thể lập kế hoạch tổng thể sau khi review spec và bổ sung từng bài đo
+  trong quá trình làm việc.

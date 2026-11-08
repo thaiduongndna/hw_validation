@@ -11,6 +11,16 @@ Tự cấu hình scope, lấy waveform và đo theo specification của device. 
 netlist và thư viện script, Manual tự nhập command kích hoạt board. Hiển thị waveform,
 bảng kết quả, xuất Excel và ảnh, hỗ trợ EE Test Plan và AI có xác nhận của kỹ sư."
 
+## Clarifications
+
+### Session 2026-11-07
+
+- Q: Khi device hỗ trợ nhiều chế độ hoặc tốc độ, bản đầu tiên phải nghiệm thu những tổ hợp nào? → A: Các tổ hợp device, interface, chế độ và tốc độ dự án sử dụng, theo EE Test Plan nếu có hoặc theo cấu hình board được kỹ sư xác nhận.
+- Q: Tool có chấm PASS/FAIL cho nội dung giao dịch ngoài timing và điện áp không? → A: Chỉ chấm timing và điện áp. Sự kiện protocol dùng để chọn vùng đo và hiển thị bằng chứng.
+- Q: Datasheet có thêm thông số ngoài danh mục của board thì lượt chạy đánh giá những bài nào? → A: Nhóm chốt trước danh mục phép đo cố định cho từng interface trên board và chốt EE Test Plan nếu sử dụng. Lượt chạy chỉ đánh giá các bài trong danh mục đó.
+- Q: Cần bao nhiêu sự kiện hợp lệ để đánh giá một bài đo và dùng giá trị nào khi có nhiều sự kiện? → A: Một sự kiện hợp lệ là đủ. Tiêu chí không có trường số sự kiện tối thiểu. Với nhiều giá trị của cùng một thông số, hiển thị giá trị tệ nhất và dùng nó để đối chiếu với specification.
+- Q: Khi có giới hạn dưới và trên, bảng hiển thị một giá trị chung hay một giá trị cho mỗi phía? → A: Một giá trị. Nếu FAIL, hiển thị số đo vi phạm giới hạn nhiều nhất. Nếu PASS, hiển thị số đo gần một trong hai giới hạn nhất.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Đo bằng Manual với cấu hình scope tự động (Priority: P1)
@@ -64,6 +74,9 @@ giới hạn, đơn vị, nguồn tham chiếu mà một bài đo sẽ sử dụ
 4. **Given** giới hạn thấp nhất là 100 ns, **When** lần lượt đánh giá các số đo hợp lệ
    120 ns và 80 ns, **Then** kết quả tương ứng là PASS và FAIL.
    Nếu thiếu giới hạn áp dụng, kết quả là INCONCLUSIVE kèm lý do.
+5. **Given** danh mục I2C của board đã chốt chỉ gồm setup time, còn datasheet có thêm
+   hold time, **When** nhập specification và chuẩn bị lượt chạy, **Then** danh sách
+   bài đo chỉ gồm setup time. Hold time nằm ngoài phạm vi và không ảnh hưởng kết luận.
 
 ### User Story 3 - Kiểm tra waveform và bằng chứng đo (Priority: P1)
 
@@ -81,11 +94,21 @@ chọn từng kết quả và kiểm tra vùng dữ liệu, kênh, mốc đo hi�
 2. **Given** kết quả được tính từ một sự kiện, **When** chọn hàng tương ứng,
    **Then** đồ thị zoom đến sự kiện đó và đánh dấu các kênh, ngưỡng hoặc mốc thời gian
    được dùng cho phép đo.
-3. **Given** một thông số tổng hợp từ nhiều sự kiện, **When** chọn kết quả,
-   **Then** GUI định vị sự kiện quyết định kết luận và cho xem bằng chứng của các
-   giá trị cực trị được báo cáo.
+3. **Given** bài đo setup time yêu cầu ≥ 100 ns, **When** capture có ba số đo hợp lệ
+   là 120, 80 và 110 ns, **Then** bảng hiển thị 80 ns và FAIL. Khi chọn hàng đó,
+   GUI zoom đến sự kiện có setup time 80 ns.
 4. **Given** phép đo thiếu sự kiện hoặc waveform, **When** chọn hàng kết quả,
    **Then** GUI nêu nguyên nhân thiếu bằng chứng và không hiển thị vùng đo giả định.
+5. **Given** một bài đo setup time của ACK trên I2C, **When** capture chỉ có NACK,
+   **Then** GUI hiển thị NACK trên waveform và ghi INCONCLUSIVE cho phép đo với lý do
+   thiếu sự kiện ACK. Các phép đo khác có đủ dữ liệu vẫn được đánh giá theo tiêu chí riêng.
+6. **Given** tiêu chí điện áp từ 3,00 V đến 3,60 V (bao gồm hai biên),
+   **When** số đo nhỏ nhất là 2,98 V và lớn nhất là 3,65 V, **Then** bảng hiển thị
+   một số đo 3,65 V và FAIL vì mức vượt 0,05 V lớn hơn mức thiếu 0,02 V.
+   Chọn hàng này phải zoom đến sự kiện 3,65 V.
+7. **Given** cùng tiêu chí, **When** số đo nhỏ nhất là 3,02 V và lớn nhất là 3,55 V,
+   **Then** bảng hiển thị 3,02 V và PASS vì khoảng cách 0,02 V tới biên dưới
+   nhỏ hơn khoảng cách 0,05 V tới biên trên.
 
 ### User Story 4 - Auto từ netlist và chuỗi lệnh (Priority: P1)
 
@@ -188,10 +211,15 @@ nguồn tham chiếu và hành vi trước, sau khi kỹ sư xác nhận.
   constitution 2.0.0 về nền tảng, ngôn ngữ, tính đúng đắn và khả năng truy xuất.
 - **FR-002**: Phạm vi phải bao gồm GPIO, UART, SPI, QSPI, I2C, I3C, JTAG, MDIO,
   RGMII, NCSI, LTPI và VGA. Với mỗi interface, phải có danh mục phép đo điện áp,
-  timing, chế độ và tốc độ hỗ trợ, cùng điều kiện và bằng chứng kiểm chứng.
+  timing và điều kiện kiểm chứng. Nhóm chốt các tổ hợp device, interface, chế độ và
+  tốc độ dự án sử dụng theo EE Test Plan nếu có, hoặc theo cấu hình board được kỹ sư
+  xác nhận. Đây là các tổ hợp bắt buộc nghiệm thu.
 - **FR-003**: Mỗi lượt chạy phải xác định được device, interface, điều kiện vận hành
-  và tập bài đo áp dụng. GUI phải cho biết bài nào được hỗ trợ, chưa hỗ trợ hoặc
-  không áp dụng. Loại bài khỏi phạm vi phải có lý do được kỹ sư xác nhận.
+  và dùng đúng danh mục phép đo đã chốt trước cho interface trên board. Khi dùng
+  EE Test Plan, nhóm thống nhất từng tham số giữa dòng trong tài liệu và bài trong
+  tool theo tiến độ triển khai interface, rồi chốt danh mục trước khi chạy. Import specification
+  chỉ cung cấp tiêu chí cho các bài trong danh mục. GUI hiển thị trạng thái hỗ trợ
+  của từng bài và giữ cố định danh mục trong suốt lượt chạy, kể cả khi thiếu dữ liệu.
 - **FR-004**: Tool phải kết nối scope qua Ethernet bằng địa chỉ kỹ sư nhập,
   hiển thị nhận dạng và trạng thái kết nối. Thiết bị mục tiêu ban đầu là
   Tektronix MSO64B và MSO66B.
@@ -227,10 +255,21 @@ nguồn tham chiếu và hành vi trước, sau khi kỹ sư xác nhận.
 - **FR-016**: Phân tích phải dùng ngưỡng và định nghĩa của phép đo trong specification.
   Vai trò của ngưỡng nhận biết logic, ngưỡng xác định thời điểm cạnh và giới hạn
   đánh giá phải được phân biệt. Một đặc tính chưa thể xác định từ waveform
-  phải được báo cần phương pháp đo bổ sung.
+  phải được báo cần phương pháp đo bổ sung. Tool giải mã các sự kiện protocol để
+  chọn đúng giao dịch, cạnh hoặc khoảng thời gian và định vị bằng chứng trên waveform.
+  Phạm vi chấm PASS/FAIL của phiên bản này chỉ gồm timing và điện áp. Nội dung
+  giao dịch (địa chỉ, dữ liệu, ACK/NACK) không tạo kết luận PASS/FAIL riêng.
 - **FR-017**: PASS phải yêu cầu đủ dữ liệu hợp lệ và mọi giới hạn áp dụng được đáp ứng.
   FAIL phải có số đo hợp lệ vi phạm ít nhất một giới hạn. Chưa đủ căn cứ phải ghi
-  INCONCLUSIVE kèm nguyên nhân. So sánh phải quy đổi đơn vị trước khi đánh giá.
+  INCONCLUSIVE kèm nguyên nhân. Một sự kiện hợp lệ là đủ để đánh giá khi đã có
+  tiêu chí áp dụng. Tiêu chí không có trường số sự kiện tối thiểu. Khi có nhiều
+  số đo hợp lệ của cùng thông số trong một bài, tool xét toàn bộ và dùng số đo
+  tệ nhất để hiển thị và so sánh sau khi quy đổi đơn vị. Với giới hạn dưới dùng
+  số nhỏ nhất, với giới hạn trên dùng số lớn nhất. Với hai giới hạn, phải kiểm tra
+  cả hai phía và ghi FAIL nếu có giá trị vi phạm bất kỳ giới hạn nào. Mỗi hàng có
+  một giá trị đo đại diện. Khi FAIL, chọn số đo vi phạm có độ lệch so với giới hạn
+  bị vi phạm lớn nhất. Khi PASS, chọn số đo có khoảng cách nhỏ nhất tới một trong
+  hai giới hạn. Xác định giá trị này từ các số đo cùng đơn vị trước khi làm tròn.
 - **FR-018**: Với giới hạn dạng ≥ hoặc ≤, giá trị đúng bằng giới hạn phải đạt.
   Nếu tiêu chí quy định toán tử khác, phải dùng toán tử đã xác nhận.
   Làm tròn để hiển thị phải giữ tách biệt với giá trị dùng để so sánh.
@@ -240,8 +279,8 @@ nguồn tham chiếu và hành vi trước, sau khi kỹ sư xác nhận.
 - **FR-020**: GUI phải hiển thị waveform và bảng thông số, số đo, đơn vị, giới hạn,
   kết luận và lý do chưa thể kết luận.
 - **FR-021**: Chọn một kết quả phải zoom đến bằng chứng của phép đo, đánh dấu mốc
-  hoặc ngưỡng áp dụng. Kết quả tổng hợp phải chỉ ra sự kiện quyết định và bằng chứng
-  của các cực trị báo cáo.
+  hoặc ngưỡng áp dụng. Kể cả với tiêu chí có hai giới hạn, GUI hiển thị một giá trị
+  tệ nhất theo FR-017 và định vị đúng sự kiện tạo ra giá trị đó.
 - **FR-022**: Tool phải lưu đủ bằng chứng để truy từ mỗi kết quả về lần chạy,
   device, tín hiệu, kênh, waveform, cấu hình, phương pháp và specification đã dùng.
 - **FR-023**: Mỗi bài đo có dữ liệu phải có ảnh bằng chứng từ tool hoặc scope,
@@ -283,11 +322,15 @@ nguồn tham chiếu và hành vi trước, sau khi kỹ sư xác nhận.
 ### Measurable Outcomes
 
 - **SC-001**: Một kỹ sư hoàn thành ít nhất một lượt đo từ chuẩn bị đến báo cáo
-  bằng Manual và một lượt bằng Auto trên từng model scope mục tiêu,
-  với kết quả khớp bộ dữ liệu tham chiếu trong dung sai đã công bố cho phép đo.
+  bằng Manual và một lượt bằng Auto trên từng model scope mục tiêu.
+  Mỗi bài được nghiệm thu bằng số đo tay của kỹ sư trên chính scope, dùng cùng
+  capture, kênh, sự kiện và ngưỡng với tool. Sai lệch phải nằm trong dung sai nhóm
+  thống nhất cho bài đo. Bằng chứng phải truy được về hai giá trị đã so sánh.
 - **SC-002**: Cả 12 interface có danh mục khả năng đo và ít nhất một tình huống
-  nghiệm thu xuyên suốt. Mọi phép đo được công bố hỗ trợ có bằng chứng kiểm chứng
-  theo đúng chế độ, tốc độ và điều kiện đã công bố.
+  nghiệm thu xuyên suốt. Với từng tổ hợp dự án đã chốt theo FR-002, mọi phép đo
+  công bố hỗ trợ phải có bằng chứng ở đúng chế độ, tốc độ và điều kiện áp dụng.
+  Ví dụ, nếu device hỗ trợ I2C 100 kHz và 400 kHz nhưng dự án chỉ dùng 400 kHz,
+  tổ hợp bắt buộc nghiệm thu cho device đó là I2C ở 400 kHz.
 - **SC-003**: Trên toàn bộ bộ dữ liệu nghiệm thu, kết luận Auto và Manual trùng nhau
   khi đầu vào phân tích và tiêu chí giống nhau.
 - **SC-004**: Mọi trường hợp nghiệm thu thiếu dữ liệu hoặc tiêu chí đều được giải thích,
@@ -322,9 +365,10 @@ nguồn tham chiếu và hành vi trước, sau khi kỹ sư xác nhận.
   Streaming liên tục từ scope chưa phải yêu cầu của phiên bản này.
 - Một command như i2cdetect là bước tạo hoạt động trên board.
   Khả năng tạo đủ sự kiện cho từng phép đo phải được xác minh trong bài đo tương ứng.
-- Danh sách interface xác định phạm vi sản phẩm. Chi tiết chế độ, tốc độ, phép đo,
-  ngưỡng, định nghĩa và dung sai nghiệm thu phải được lập theo specification của
-  device cùng tài liệu giao tiếp áp dụng. Chỉ công bố khả năng đã có bằng chứng.
+- Nhóm xác định từng bài trong quá trình triển khai interface theo [kế hoạch](plan.md).
+  Ngưỡng, định nghĩa và giới hạn đánh giá board lấy từ specification của device và
+  tài liệu giao tiếp áp dụng. Dung sai nghiệm thu số đo của tool được nhóm xác định
+  cho từng bài khi chuẩn bị đối chiếu với phép đo tay trên scope.
 - Cần mẫu netlist Cadence Design Entry HDL, EE Test Plan, tài liệu device
   và script bên thứ ba để xác định định dạng hỗ trợ và dữ liệu nghiệm thu
   trước khi hoàn tất thiết kế các chức năng import.

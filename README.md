@@ -7,9 +7,11 @@
 
 - [Constitution 2.0.0](.specify/memory/constitution.md)
 - [Đặc tả tổng thể — Draft](specs/001-hardware-validation/spec.md)
-- [Checklist chất lượng — 13/16 mục đạt](specs/001-hardware-validation/checklists/requirements.md)
+- [Checklist chất lượng](specs/001-hardware-validation/checklists/requirements.md)
+- [Plan nháp — chốt tham số và nghiệm thu bằng phép đo tay](specs/001-hardware-validation/plan.md)
 
-Ưu tiên chốt danh mục phép đo, chế độ và tốc độ cho 12 interface.
+Nhóm chốt từng bài đo theo tiến độ triển khai interface, thống nhất tham số giữa
+EE Test Plan và tool, rồi đối chiếu với kết quả đo tay trên scope.
 Cần mẫu netlist Cadence Design Entry HDL, EE Test Plan, specification device
 và script import để hoàn thiện các đầu vào và điều kiện nghiệm thu.
 
